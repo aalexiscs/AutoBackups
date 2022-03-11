@@ -1,19 +1,24 @@
+using Newtonsoft.Json;
 using System.Diagnostics;
 
 namespace AutoBackups
 {
     public partial class Menu : Form
     {
-        private string defaultSourceDirectory = @"C:\Users\aalex\Downloads\AutoBackups\Source\";
-        private static string defaultBackupDirectory = @"C:\Users\aalex\Downloads\AutoBackups\Backups\";
+        private readonly string defaultSourceDirectory;
+        private readonly string defaultBackupDirectory;
         private const string appName = "AutoBackups";
-        private const string defaultBackupsDirectory = @"C:\Users\aalex\Downloads\AutoBackups\Backups\";
 
         public Menu()
         {
             InitializeComponent();
 
             WindowCustomization();
+
+            Config config = ReadConfig();
+
+            defaultSourceDirectory = config.SourceDirectory;
+            defaultBackupDirectory = config.BackupDirectory;
         }
 
         private void Menu_Load(object sender, EventArgs e)
@@ -121,13 +126,13 @@ namespace AutoBackups
 
         private void btOpenBackupFolder_Click(object sender, EventArgs e)
         {
-            if(!Directory.Exists(defaultBackupsDirectory))
+            if(!Directory.Exists(defaultBackupDirectory))
             {
                 MessageBox.Show(Messages.DIRECTORY_DOES_NOT_EXIST, appName, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            Process.Start("explorer.exe", defaultBackupsDirectory);
+            Process.Start("explorer.exe", defaultBackupDirectory);
         }
 
         private void btOpenSourceFolder_Click(object sender, EventArgs e)
@@ -141,5 +146,28 @@ namespace AutoBackups
 
             Process.Start("explorer.exe", defaultSourceDirectory);
         }
+
+        private Config ReadConfig()
+        {
+            string json = string.Empty;
+            Config? config = new Config();
+
+            try
+            {
+                json = File.ReadAllText("AutoBackups.Config.json");
+
+                config = JsonConvert.DeserializeObject<Config>(json);
+            }
+            catch(FileNotFoundException ex)
+            {
+                MessageBox.Show(Messages.CONFIG_FILE_NOT_FOUND, appName, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            catch(JsonReaderException ex)
+            {
+                MessageBox.Show(Messages.INCORRECT_CONFIG, appName, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            return config;
+        }
+
     }
 }
